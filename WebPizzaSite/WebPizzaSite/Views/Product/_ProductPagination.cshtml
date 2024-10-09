@@ -2,34 +2,64 @@
 
 <nav class="d-flex justify-content-center">
     <ul class="pagination">
-        <li class="page-item disabled">
-            <a class="page-link">Previous</a>
-        </li>
-        @for(int i=1; i<=Model.Pagination.TotalPages;i++)
+        @if (Model.Search.Page > 1)
         {
-            if(i==Model.Search.Page)
+            <li class="page-item">
+                <a class="page-link" asp-action="Index" asp-route-page="@(Model.Search.Page - 1)">Previous</a>
+            </li>
+        }
+        else
+        {
+            <li class="page-item disabled">
+                <a class="page-link">Previous</a>
+            </li>
+        }
+
+        @for (int i = 1; i <= Model.Pagination.TotalPages; i++)
+        {
+            if (i == Model.Search.Page)
             {
                 <li class="page-item active">
-                    <a class="page-link" asp-action="Index"
-                       asp-route-page="@i">@i</a>
+                    <a class="page-link" asp-action="Index" asp-route-page="@i">@i</a>
                 </li>
             }
             else
             {
-                <li class="page-item">
-                    <a class="page-link" asp-action="Index"
-                       asp-route-page="@i">@i</a>
-                </li>
+                // Show page numbers around the current page
+                if (i >= Model.Search.Page - 2 && i <= Model.Search.Page + 2)
+                {
+                    <li class="page-item">
+                        <a class="page-link" asp-action="Index" asp-route-page="@i">@i</a>
+                    </li>
+                }
+                else if (i == 1 || i == Model.Pagination.TotalPages)
+                {
+                    // Show first and last page numbers
+                    <li class="page-item">
+                        <a class="page-link" asp-action="Index" asp-route-page="@i">@i</a>
+                    </li>
+                }
+                else if (i == Model.Search.Page - 3 || i == Model.Search.Page + 3)
+                {
+                    // Show ellipsis
+                    <li class="page-item disabled">
+                        <a class="page-link">...</a>
+                    </li>
+                }
             }
-            
         }
-        @* <li class="page-item"><a class="page-link" href="#">1</a></li>
-        <li class="page-item active" aria-current="page">
-            <a class="page-link" href="#">2</a>
-        </li>
-        <li class="page-item"><a class="page-link" href="#">3</a></li> *@
-        <li class="page-item">
-            <a class="page-link" href="#">Next</a>
-        </li>
+
+        @if (Model.Search.Page < Model.Pagination.TotalPages)
+        {
+            <li class="page-item">
+                <a class="page-link" asp-action="Index" asp-route-page="@(Model.Search.Page + 1)">Next</a>
+            </li>
+        }
+        else
+        {
+            <li class="page-item disabled">
+                <a class="page-link">Next</a>
+            </li>
+        }
     </ul>
 </nav>

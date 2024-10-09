@@ -14,7 +14,7 @@ using System.IO;
 
 namespace WebPizzaSite.Controllers
 {
-    [Authorize(Roles = "Admin")]
+    
     public class ProductController : Controller
     {
         private readonly PizzaDbContext _pizzaDbContext;
@@ -32,7 +32,7 @@ namespace WebPizzaSite.Controllers
         public IActionResult Index(ProductSearchViewModel search)
         {
             var query = _pizzaDbContext.Products.AsQueryable();
-            int pageSize = 8;
+            int pageSize = 8; // Number of products per page
             int page = search.Page ?? 1;
             page = page - 1;
 
@@ -41,7 +41,7 @@ namespace WebPizzaSite.Controllers
                 query = query.Where(x => x.Name.ToLower().Contains(search.Name.ToLower()));
             }
 
-            int count = query.Count();
+            int count = query.Count(); // Total number of products
 
             query = query.OrderBy(x => x.Name).Skip(page * pageSize).Take(pageSize);
             var list = query
@@ -63,8 +63,10 @@ namespace WebPizzaSite.Controllers
                     Page = search.Page ?? 1
                 }
             };
+
             return View(model);
         }
+
 
         [HttpGet]
         [Authorize(Roles = "Admin")]
