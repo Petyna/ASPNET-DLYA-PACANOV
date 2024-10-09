@@ -1,5 +1,4 @@
 using Bogus;
-using Bogus.DataSets;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using WebPizzaSite.Constants;
@@ -28,12 +27,6 @@ builder.Services.AddIdentity<UserEntity, RoleEntity>(options =>
     options.Password.RequireUppercase = false;
     options.Password.RequiredLength = 6;
     options.Password.RequiredUniqueChars = 1;
-
-    //options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
-    //options.Lockout.MaxFailedAccessAttempts = 5;
-    //options.Lockout.AllowedForNewUsers = true;
-
-    //options.SignIn.RequireConfirmedEmail = true;
 })
     .AddEntityFrameworkStores<PizzaDbContext>()
     .AddDefaultTokenProviders();
@@ -43,17 +36,16 @@ builder.Services.ConfigureApplicationCookie(options =>
     // Cookie settings
     options.Cookie.HttpOnly = true;
     options.ExpireTimeSpan = TimeSpan.FromMinutes(60);
-
     options.LoginPath = "/Account/Login";
     options.AccessDeniedPath = "/Account/AccessDenied";
     options.SlidingExpiration = true;
 });
 
-
 builder.Services.AddAutoMapper(typeof(Program));
 
 var app = builder.Build();
 
+// Seed data
 using (var serviceScope = app.Services.GetRequiredService<IServiceScopeFactory>().CreateScope())
 {
     var context = serviceScope.ServiceProvider.GetService<PizzaDbContext>();
@@ -63,8 +55,7 @@ using (var serviceScope = app.Services.GetRequiredService<IServiceScopeFactory>(
 
     context?.Database.Migrate();
 
-    //якщо категорії відстуні
-
+    // Seed Categories
     if (!context.Categories.Any())
     {
         string url = "https://loremflickr.com/1200/800/tokio,cat/all";
@@ -75,7 +66,6 @@ using (var serviceScope = app.Services.GetRequiredService<IServiceScopeFactory>(
             string fileName = imageWorker.ImageSave(url);
             if (!string.IsNullOrEmpty(fileName))
             {
-
                 var entity = new CategoryEntity
                 {
                     Name = categoryName,
@@ -83,23 +73,22 @@ using (var serviceScope = app.Services.GetRequiredService<IServiceScopeFactory>(
                     Image = fileName
                 };
                 context.Categories.Add(entity);
-                context.SaveChanges();
             }
         }
+        context.SaveChanges();
     }
 
+    // Seed Products
     if (!context.Products.Any())
     {
         string url = "https://loremflickr.com/1200/800/car/all";
         var faker = new Faker("uk");
-
         var catCount = context.Categories.Count();
-        if (catCount != 0)
+        if (catCount > 0)
         {
-
             var catIds = context.Categories.Select(x => x.Id).ToList();
-            int propductCount = 100;
-            for (int k = 0; k < propductCount; k++)
+            int productCount = 100;
+            for (int k = 0; k < productCount; k++)
             {
                 var catIndex = faker.Random.Number(0, catCount - 1);
                 var p = new ProductEntity
@@ -129,25 +118,17 @@ using (var serviceScope = app.Services.GetRequiredService<IServiceScopeFactory>(
         }
     }
 
+    // Seed Roles
     if (!context.Roles.Any())
     {
-        var admin = new RoleEntity
-        {
-            Name = Roles.Admin
-        };
-        var result = roleManager.CreateAsync(admin).Result;
-        if (!result.Succeeded)
-        {
-            Console.WriteLine($"------Помилка ствоерння ролі {Roles.Admin}------");
-        }
+        var adminRole = new RoleEntity { Name = Roles.Admin };
+        var userRole = new RoleEntity { Name = Roles.User };
 
-        result = roleManager.CreateAsync(new RoleEntity { Name = Roles.User }).Result;
-        if (!result.Succeeded)
-        {
-            Console.WriteLine($"------Помилка ствоерння ролі {Roles.User}------");
-        }
+        await roleManager.CreateAsync(adminRole);
+        await roleManager.CreateAsync(userRole);
     }
 
+    // Seed Admin User
     if (!context.Users.Any())
     {
         var user = new UserEntity
@@ -156,42 +137,29 @@ using (var serviceScope = app.Services.GetRequiredService<IServiceScopeFactory>(
             UserName = "admin@gmail.com",
             LastName = "Шолом",
             FirstName = "Вулкан",
-            Picture = "amdin.jpg"
+            Picture = "admin.jpg"
         };
-        var result = userManager.CreateAsync(user, "123456").Result;
+        var result = await userManager.CreateAsync(user, "123456");
         if (result.Succeeded)
         {
-            result = userManager.AddToRoleAsync(user, Roles.Admin).Result;
-            if (!result.Succeeded)
-            {
-                Console.WriteLine($"-------Не вдалося надати роль {Roles.Admin} користувачу {user.Email}------");
-            }
-        }
-        else
-        {
-            Console.WriteLine($"-------Не вдалося створити користувача {user.Email}-------");
+            await userManager.AddToRoleAsync(user, Roles.Admin);
         }
     }
 }
-
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
 }
+
 app.UseStaticFiles();
-
 app.UseRouting();
-
 app.UseCookiePolicy();
 app.UseAuthentication();
 app.UseAuthorization();
 
-//app.MapControllerRoute(
-//    name: "default",
-//    pattern: "{controller=Main}/{action=Index}/{id?}");
-#pragma warning disable ASP0014 // Suggest using top level route registrations
+// Configure endpoints
 app.UseEndpoints(endpoints =>
 {
     endpoints.MapAreaControllerRoute(
@@ -203,6 +171,5 @@ app.UseEndpoints(endpoints =>
         name: "default",
         pattern: "{controller=Main}/{action=Index}/{id?}");
 });
-#pragma warning restore ASP0014 // Suggest using top level route registrations
 
 app.Run();

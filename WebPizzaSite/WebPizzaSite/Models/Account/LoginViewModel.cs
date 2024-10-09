@@ -13,5 +13,11 @@ namespace WebPizzaSite.Models.Account
         [Required(ErrorMessage = "Please enter a password.")]
         [DataType(DataType.Password)]
         public string Password { get; set; } = string.Empty;
+
+        // Profile properties
+        [Display(Name = "Username")]
+        public string? UserName { get; set; }  // Nullable to allow reuse for login
+
+        // You can add other profile-related properties here if needed
     }
 }

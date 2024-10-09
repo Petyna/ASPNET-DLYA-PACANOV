@@ -56,5 +56,57 @@ namespace WebPizzaSite.Controllers
             await _signInManager.SignOutAsync();
             return Redirect("/");
         }
+
+        [HttpGet]
+        public async Task<IActionResult> Profile()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return RedirectToAction("Login");
+            }
+
+            var model = new LoginViewModel
+            {
+                Email = user.Email,
+                UserName = user.UserName,  
+            };
+
+            return View(model);
+        }
+
+        [HttpGet]
+        public IActionResult Register()
+        {
+            return View();  // This will load the Register.cshtml
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Register(RegisterViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);  // Return the same view if the model is invalid
+            }
+
+            var user = new UserEntity { UserName = model.UserName, Email = model.Email };
+            var result = await _userManager.CreateAsync(user, model.Password);
+
+            if (result.Succeeded)
+            {
+                await _signInManager.SignInAsync(user, isPersistent: false);
+                return RedirectToAction("Profile", "Account");  // Redirect to Profile after successful registration
+            }
+
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error.Description);
+            }
+
+            return View(model);  // Reload the form with errors if registration fails
+        }
+
     }
+
+
 }
