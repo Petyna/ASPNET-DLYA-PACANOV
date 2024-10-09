@@ -1,21 +1,20 @@
 ﻿using AutoMapper;
 using AutoMapper.QueryableExtensions;
-using Microsoft.AspNetCore.Authorization; // Додайте це
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebPizzaSite.Data;
 using WebPizzaSite.Data.Entities;
 using WebPizzaSite.Models.Product;
-using SixLabors.ImageSharp; 
-using SixLabors.ImageSharp.Processing; 
-using SixLabors.ImageSharp.Formats; // вирішив додати бібліотеки для конвертації до webp формату, тому що без них як я зрозумів не вийде це реалізувати
-using static System.Net.Mime.MediaTypeNames;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Processing;
 using SixLabors.ImageSharp.Formats.Webp;
+using System.IO;
 
 namespace WebPizzaSite.Controllers
 {
-    [Authorize(Roles = "Admin")] 
+    [Authorize(Roles = "Admin")]
     public class ProductController : Controller
     {
         private readonly PizzaDbContext _pizzaDbContext;
@@ -42,7 +41,7 @@ namespace WebPizzaSite.Controllers
                 query = query.Where(x => x.Name.ToLower().Contains(search.Name.ToLower()));
             }
 
-            int count = query.Count();  //усі запити в таблиці, які можна переглядати
+            int count = query.Count();
 
             query = query.OrderBy(x => x.Name).Skip(page * pageSize).Take(pageSize);
             var list = query
@@ -68,7 +67,7 @@ namespace WebPizzaSite.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin")] 
+        [Authorize(Roles = "Admin")]
         public IActionResult Create()
         {
             var catList = _pizzaDbContext.Categories
@@ -81,7 +80,7 @@ namespace WebPizzaSite.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin")] 
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create(ProductCreateViewModel model)
         {
             if (!ModelState.IsValid)
@@ -108,15 +107,17 @@ namespace WebPizzaSite.Controllers
                     var path = Path.Combine(_webHostEnvironment.WebRootPath, "uploads", fileName);
 
                     // Використовуємо ImageSharp для обробки зображення
-                    using (var image = await SixLabors.ImageSharp.Image.LoadAsync(img.OpenReadStream())) // Вказуємо повний шлях
+                    using (var image = await SixLabors.ImageSharp.Image.LoadAsync(img.OpenReadStream()))
                     {
+                        // Змінюємо розмір зображення
                         image.Mutate(x => x.Resize(new ResizeOptions
                         {
-                            Size = new Size(512, 512), 
-                            Mode = ResizeMode.Max 
+                            Size = new Size(512, 512), // Задайте бажаний розмір
+                            Mode = ResizeMode.Max // Режим масштабування
                         }));
 
-                        await image.SaveAsync(path, new WebpEncoder()); // Збереження у форматі WebP
+                        // Збереження зображення у форматі WebP
+                        await image.SaveAsync(path, new WebpEncoder());
                     }
 
                     var imgEntity = new ProductImageEntity
@@ -126,12 +127,11 @@ namespace WebPizzaSite.Controllers
                         Product = prod,
                     };
                     _pizzaDbContext.ProductImages.Add(imgEntity);
-                    await _pizzaDbContext.SaveChangesAsync(); 
+                    await _pizzaDbContext.SaveChangesAsync();
                 }
             }
 
             return RedirectToAction("Index");
         }
-
     }
 }
