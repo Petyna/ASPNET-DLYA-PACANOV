@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace WebAlina.Data.Entities
 {
@@ -13,6 +14,6 @@ namespace WebAlina.Data.Entities
         [ForeignKey("Category")]
         public int CategoryId { get; set; }
         public CategoryEntity? Category { get; set; }
-        public virtual ICollection<ProductImageEntity>? ProductImages { get; set; }
+        [JsonIgnore] public virtual ICollection<ProductImageEntity>? ProductImages { get; set; }
     }
 }

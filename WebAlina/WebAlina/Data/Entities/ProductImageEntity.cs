@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace WebAlina.Data.Entities
 {
@@ -12,6 +13,6 @@ namespace WebAlina.Data.Entities
         public int Priority { get; set; }
         [ForeignKey("Product")]
         public int ProductId { get; set; }
-        public virtual ProductEntity? Product { get; set; }
+        [JsonIgnore] public virtual ProductEntity? Product { get; set; }
     }
 }

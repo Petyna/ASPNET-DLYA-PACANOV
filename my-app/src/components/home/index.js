@@ -1,40 +1,33 @@
-import {useEffect, useState} from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
-import {Link} from "react-router-dom";
+import { Link } from "react-router-dom";
 import APP_ENV from "../../env";
+import Navbar from '../navbar'; // Импортируем Navbar
 
 const HomePage = () => {
     const [list, setList] = useState([]);
 
     useEffect(() => {
-
         axios.get(`${APP_ENV.URL}api/categories`)
             .then(res => {
-                //console.log("data server", res);
                 setList(res.data);
             });
-        // setList([{
-        //     id: 1,
-        //     name: "Ковбаса",
-        //     image: "https://sardelka.com.ua/wp-content/uploads/2023/04/Pryprava-kovbasa-Matsykova-ta-matsik-Poliskyj.jpg"
-        // }]);
-    },[]);
+    }, []);
+
     console.log("List items", list);
-    const handleAddButton = () => {
-        setList([
-            ...list, {
-                id: 2,
-                name: "Масло",
-                image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQXPA1yX3G4SdQRpEDjr56wVaYCPqJwsxsdVg&s"
-            }]);
-    }
+
     return (
         <>
+            <Navbar /> {/* Добавляем Navbar с правильным регистром */}
             <div className="container">
                 <h1 className="text-center">Список категорій</h1>
-                <Link to={"/create"} className={"btn btn-success"}>Додати</Link>
-                {/*<button className={"btn btn-success"} onClick={handleAddButton}>Додати новий</button>*/}
-                <table className="table">
+                {/* Кнопка для добавления категории */}
+                <Link to={"/create-category"} className={"btn btn-success mx-2"}>Додати категорію</Link>
+
+                {/* Кнопка для добавления продукта */}
+                <Link to={"/create-product"} className={"btn btn-primary mx-2"}>Додати продукт</Link>
+
+                <table className="table mt-4">
                     <thead>
                     <tr>
                         <th scope="col">#</th>
@@ -48,7 +41,7 @@ const HomePage = () => {
                         <tr key={item.id}>
                             <th scope="row">{item.id}</th>
                             <td>
-                                <img src={`${APP_ENV.URL}images/150_${item.image}`} alt={item.name} width="75px"/>
+                                <img src={`${APP_ENV.URL}images/150_${item.image}`} alt={item.name} width="75px" />
                             </td>
                             <td>{item.name}</td>
                             <td>{item.description}</td>
