@@ -11,7 +11,6 @@ const ProductCreatePage = () => {
         price: 0, // Ціна продукту
         categoryId: 1, // Ідентифікатор категорії
         images: [], // Список файлів зображень
-        description: ""
     });
 
     // Обробник зміни текстових полів
@@ -19,9 +18,25 @@ const ProductCreatePage = () => {
         setData({ ...data, [e.target.name]: e.target.value });
     };
 
-    // Обробник вибору файлів (для кількох зображень)
+    // Обробник вибору файлів (для одного зображення)
     const handlerOnFileChange = (e) => {
-        setData({ ...data, images: e.target.files }); // Зберігаємо всі обрані файли
+        const file = e.target.files[0]; // Отримуємо перший обраний файл
+        if (file) {
+            setData((prevState) => ({
+                ...prevState,
+                images: [...prevState.images, file], // Додаємо файл до масиву зображень
+            }));
+        }
+        e.target.value = null; // Очищення поля вводу
+    };
+
+    // Видалення непотрібного файлу
+    const handleRemoveImage = (index) => {
+        setData((prevState) => {
+            const newImages = [...prevState.images];
+            newImages.splice(index, 1); // Видаляємо зображення за індексом
+            return { ...prevState, images: newImages };
+        });
     };
 
     // Обробник надсилання форми
@@ -32,7 +47,6 @@ const ProductCreatePage = () => {
         const formData = new FormData();
         formData.append("name", data.name);
         formData.append("price", data.price);
-        formData.append("description", data.description);
         formData.append("categoryId", data.categoryId);
 
         // Додаємо всі зображення до formData
@@ -47,7 +61,12 @@ const ProductCreatePage = () => {
             }
         })
             .then(() => {
-                navigate("/products"); // Перенаправлення після успішного додавання на products
+                const addMore = window.confirm("Продукт додано!");
+                if (addMore) {
+                    setData({ ...data, images: [] }); // Очищаємо масив зображень для нового завантаження
+                } else {
+                    navigate("/products"); // Перенаправлення на список продуктів
+                }
             })
             .catch(err => {
                 console.error("Помилка при надсиланні даних:", err);
@@ -79,7 +98,7 @@ const ProductCreatePage = () => {
                 <div className="mb-3">
                     <label htmlFor="price" className="form-label">Ціна</label>
                     <input
-                        type="text"
+                        type="number" // Зміна типу на number для правильної обробки цін
                         className="form-control"
                         id="price"
                         name="price"
@@ -95,21 +114,8 @@ const ProductCreatePage = () => {
                         type="file"
                         id="images"
                         name="images"
-                        multiple  // Дозволяє вибирати кілька файлів
                         onChange={handlerOnFileChange}
                     />
-                </div>
-                <div className="form-floating mb-3">
-                    <textarea
-                        className="form-control"
-                        placeholder="Вкажіть опис"
-                        name={"description"}
-                        id="description"
-                        value={data.description}
-                        onChange={handlerOnChange}
-                        style={{ height: "100px" }}
-                    ></textarea>
-                    <label htmlFor="description">Опис</label>
                 </div>
 
                 <div className="mb-3 d-flex justify-content-center">
@@ -117,6 +123,30 @@ const ProductCreatePage = () => {
                     <button type="submit" className="btn btn-primary">Додати</button>
                 </div>
             </form>
+
+            {/* Відображення завантажених зображень */}
+            {data.images.length > 0 && (
+                <div>
+                    <h3>Завантажені зображення:</h3>
+                    <ul className="list-unstyled">
+                        {data.images.map((image, index) => (
+                            <li key={index} className="mb-2">
+                                <div className="d-flex align-items-center">
+                                    <img
+                                        src={URL.createObjectURL(image)} // Використовуємо URL.createObjectURL для попереднього перегляду
+                                        alt={image.name}
+                                        style={{ width: "100px", height: "100px", objectFit: "cover", marginRight: "10px" }}
+                                    />
+                                    <span>{image.name}</span>
+                                    <button className="btn btn-danger btn-sm ms-2" onClick={() => handleRemoveImage(index)}>
+                                        Видалити
+                                    </button>
+                                </div>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
         </div>
     );
 };

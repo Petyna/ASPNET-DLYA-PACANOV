@@ -156,6 +156,7 @@ const EditProductPage = () => {
                     />
                 </div>
 
+
                 <button type="submit" className="btn btn-success mt-3">
                     Зберегти зміни
                 </button>
